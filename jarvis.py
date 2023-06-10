@@ -12,22 +12,26 @@ import requests
 import json
 import wolframalpha
 import time
+import random
+import pywhatkit as kit
 from bs4 import BeautifulSoup
     
 def takeCommand():
     r = sr.Recognizer()
     with sr.Microphone() as source:
-        r.adjust_for_ambient_noise(source)
         print("Listening...")
-        audio = r.listen(source)
+        r.pause_threshold = 1
+        r.energy_threshold = 300
+        audio = r.listen(source,0,4)
     
     try:
-            print("Recognizing")
+            print("Recognizing...")
             statement = r.recognize_google(audio, language='en-in')
             print("the command is printed=", statement)
              
     except Exception as e:
             print(e)
+            speak("Say that again sir")
             print("Say that again sir")
             return "None"
          
@@ -40,7 +44,8 @@ def speak(audio):
     engine.setProperty('voice', voices[0].id)
     engine.say(audio)
     engine.runAndWait()
-
+    
+    
 def wishMe():
     hour = datetime.datetime.now().hour
     if 0 <= hour < 12:
@@ -54,7 +59,7 @@ def wishMe():
         print("Good Evening")
 
 
-print("Loading your personal assistant Jarvis A.I")
+print("Loading your personal assistant Jarvis")
 wishMe()
 
 def tellDay():
@@ -74,6 +79,11 @@ def tellDay():
         print(day_week)
         speak(f"The day is {day_week}")
         
+def searchGoogle(say):
+    kit.search(say)
+    
+def playYoutube(video):
+    kit.playonyt(video)
 
 def tellNews():
     apidict = {"business":"https://newsapi.org/v2/top-headlines?country=in&category=business&apiKey=044e73a386d4459d930a1d2daaab5342",
@@ -121,8 +131,90 @@ def tellNews():
             break
         
     speak("Thats it sir")
+
+def send_whatsapp_message(number, message):
+    kit.sendwhatmsg_instantly(f"+91{number}",message)
     
+def crack_joke():
+    headers = {
+        'Accept': 'application/json'
+    }
+    res = requests.get("https://icanhazdadjoke.com/",headers=headers).json()
+    return res['joke']
+
+def give_advice():
+    url = "https://api.adviceslip.com/advice"
+    res = requests.get(url).json()
+    return res['slip']['advice']
     
+ 
+def game_play():
+    speak("Lets Playyy Rock, Paper, Scissors")
+    print("Lets start playing")
+    i = 0
+    me_score = 0
+    com_score = 0
+    
+    while(i<5):
+        choose = ("Rock","Paper","Scissor")  
+        com_choose = random.choice(choose)
+        query = takeCommand().lower()
+        if(query == "Rock"):
+            if(com_choose == "Paper"):
+                speak("paper")
+                com_score+=1
+                print(f"score:- me:-{me_score}, com:- {com_score}")
+            
+            elif(com_choose == "Rock"): 
+                speak("rock") 
+                print(f"Score:- me:-{me_score}, com:- {com_score}")
+            
+            else:
+                speak("scissor")
+                me_score+=1
+                print(f"Score:- me:-{me_score}, com:- {com_choose}")
+        
+        elif(query == "Paper" or query == "taper"):
+            if(com_choose == "Paper"):
+                speak("paper")
+                print(f"score:- me:-{me_score}, com:- {com_score}")
+            
+            elif(com_choose == "Rock"): 
+                speak("rock") 
+                me_score+=1
+                print(f"Score:- me:-{me_score}, com:- {com_score}")
+            
+            else:
+                speak("scissor")
+                com_score+=1
+                print(f"Score:- me:-{me_score}, com:- {com_choose}")
+                        
+        elif(query == "scissor" or query == "cissor"):
+            if(com_choose == "Paper"):
+                speak("paper")
+                me_score+=1
+                print(f"score:- me:-{me_score}, com:- {com_score}")
+            
+            elif(com_choose == "Rock"): 
+                speak("rock") 
+                com_score+=1
+                print(f"score:- me:-{me_score}, com:- {com_score}")
+            
+            else:
+                speak("scissor")
+                print(f"score:- me:-{me_score}, com:- {com_choose}")                                                
+        i+=1
+    
+    print(f"Final Score :- Me:-{me_score}, com:- {com_score}")  
+     
+    if(me_score>com_score):
+        speak("you are the winner sir")
+        print("You are winner of the game")        
+    else:
+        speak("you loosed the game sir hahahaha")
+        print("You lose the game")
+                      
+            
 def Temp():
     speak("What is the temperature")
     temp = takeCommand()
@@ -132,58 +224,103 @@ def Temp():
 
 def TakeQuery():
     while (True):
-        speak("This is your personal assistant jarvis")
+        speak("This is your personal assistant jarvis A.I")
         speak("Tell me how can I help you")
         statement = takeCommand().lower()
+        
         if "tell your name" in statement:
             speak("My name is Jarvis")
             continue
 
-        elif "goodbye" in statement or "ok bye" in statement or "stop" in statement:
+        elif "goodbye" in statement or "ok bye" in statement or "stop" in statement or "bye" in statement:
             speak("Your personal assistant Jarvis is shutting down")
             print("Goodbye")
             break
         
-        elif "How are you" in statement:
+        elif "how are you" in statement:
             speak("I am fine sir")
+            speak("Tell me about you")        
             continue
         
         elif "news" in statement:
             speak("Yes sir")
             tellNews()
             continue
-    
-        elif "from wikipedia" in statement:
-           speak("Searching for wikipedia")
-           statement = statement.replace("wikipedia", "")
-           result = wikipedia.summary(statement, statement=4)
-           speak("According to wikipedia")
-           print(result)
-           speak(result)
-           continue
-               
+        
+        elif "wikipedia" in statement:
+            speak("Searching Wikipedia Sir")
+            statement = statement.replace("wikipedia","")
+            results = wikipedia.summary(statement,sentences=3)
+            speak(f"Accoring to the wikipedia{results}")
+            print(results)
+            continue   
+        elif "advice" in statement:
+            speak(f"Hope you will like the advice sir")
+            advice = give_advice()
+            speak(advice)
+            print(advice)
+            continue
+        
+        elif "send whatsapp message" in statement:
+            speak("on what number should i send the message sir? please enter in the console")
+            number = input("Please enter the message")
+            speak("What is the message you want to send")
+            message = takeCommand().lower()
+            send_whatsapp_message(number, message)
+            continue
+            
         elif "open google" in statement:
            webbrowser.open("https://www.google.com")
-           speak("google crome is open now")
+           speak("google crome is open now")    
            time.sleep(1)
-           continue        
+           continue 
+        elif "open discord" in statement:
+           webbrowser.open("https://discord.com")
+           speak("discord is open now")
+           time.sleep(1)
+           continue       
         
         elif "open youtube" in statement:
            webbrowser.open("https://www.youtube.com")
            speak("youtube is open now")
            time.sleep(1)
            continue
-       
-        elif "open Linkedin" in statement:
-            speak("Opening Linkedin Sir")
-            webbrowser.open("https://www.linkedin.com")
-            continue
+
+        elif "search on google" in statement:
+            speak("What should i search on google? sir")             
+            say = takeCommand().lower()
+            searchGoogle(say) 
+            continue 
         
-        elif "open Facebook" in statement:
-            speak("Opening Facebook sir")
+        elif "open facebook" in statement:
             webbrowser.open("https://www.facebook.com")
+            speak("Opening Facebook sir")
+            time.sleep(1)
             continue
         
+        elif "joke" in statement:
+            speak(f"Hope you will like this one sir")
+            joke = crack_joke()
+            speak(joke)
+            speak("for your convineance i'm writing on screen sir")
+            print(joke)
+            continue
+        
+        elif "play video on youtube" in statement:
+            speak("what should i search on youtube sir")
+            query = takeCommand().lower()
+            playYoutube(query)
+            continue
+        
+        elif "shutdown" in statement:
+            speak("Do ou really want to shutdown?")
+            shutdown = input("Do you really want to shut down ? (yes/no): ")
+            if shutdown == "yes":
+                speak("Shutting down the pc sir")
+                os.system("shutdown /s /t 1")
+                
+            elif shutdown == "no":
+                break
         
         
         elif "which day is today" in statement:
@@ -219,6 +356,10 @@ def TakeQuery():
             speak(f"Current {search} is: {wheat}")
             print(f"current {search} is {wheat}")
             continue         
+        
+        elif "play a game" in statement:
+            game_play()
+            continue
         
         else:
             speak("Application not available sir")
